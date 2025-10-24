@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <title>欢迎 | JoeJoeJoe 自动脚本服务</title>
+    <meta name="color-scheme" content="dark light" />
+    <style>
+      :root {
+        --bg1: #0a0b10;
+        --txt: #eaf6ff;
+        --muted: #9bb3c7;
+        --accent: #00ffc6;
+        --hot: #7f00ff;
+        --cool: #00e5ff;
+        --glass: rgba(255, 255, 255, 0.06);
+        --stroke: rgba(255, 255, 255, 0.12);
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.35),
+          inset 0 0 1px rgba(255, 255, 255, 0.05);
+        --radius: 18px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      /* 确保所有带 hidden 属性的元素在所有浏览器中都完全隐藏 */
+      [hidden] {
+        display: none !important;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        color: var(--txt);
+        background: radial-gradient(
+            1200px 800px at 10% 10%,
+            rgba(127, 0, 255, 0.14),
+            transparent 60%
+          ),
+          radial-gradient(
+            1000px 700px at 90% 80%,
+            rgba(0, 229, 255, 0.16),
+            transparent 60%
+          ),
+          linear-gradient(120deg, #0a0b10, #07080d 60%, #06070b);
+        overflow: hidden;
+        font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          "PingFang SC", "Noto Sans CJK", "Microsoft YaHei", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      /* 背景渐变慢速平移 */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: -15% -15%;
+        background: conic-gradient(
+          from 0deg at 50% 50%,
+          rgba(127, 0, 255, 0.08),
+          rgba(0, 229, 255, 0.08),
+          rgba(0, 255, 198, 0.06),
+          rgba(127, 0, 255, 0.08)
+        );
+        filter: blur(60px);
+        animation: pan 24s linear infinite;
+        pointer-events: none;
+        z-index: 0;
+      }
+      @keyframes pan {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* 粒子层 */
+      #bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+      }
+
+      /* 顶部高光扫光线 */
+      .sweep {
+        position: fixed;
+        top: -40vh;
+        left: -20vw;
+        width: 140vw;
+        height: 80vh;
+        background: linear-gradient(
+          to right,
+          transparent 0%,
+          rgba(255, 255, 255, 0.06) 45%,
+          rgba(255, 255, 255, 0.12) 50%,
+          rgba(255, 255, 255, 0.06) 55%,
+          transparent 100%
+        );
+        transform: rotate(-8deg);
+        filter: blur(6px);
+        animation: sweep 9s ease-in-out infinite;
+        mix-blend-mode: screen;
+        z-index: 1;
+        pointer-events: none;
+      }
+      @keyframes sweep {
+        0%,
+        100% {
+          transform: translateX(-10%) rotate(-8deg);
+          opacity: 0.35;
+        }
+        50% {
+          transform: translateX(10%) rotate(-8deg);
+          opacity: 0.1;
+        }
+      }
+
+      /* 主容器 */
+      .hero {
+        position: relative;
+        z-index: 2;
+        height: 100dvh;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      .card {
+        position: relative;
+        max-width: 980px;
+        width: min(94vw, 980px);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.08),
+          rgba(255, 255, 255, 0.02)
+        );
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(18px) saturate(140%);
+        -webkit-backdrop-filter: blur(18px) saturate(140%);
+        overflow: hidden;
+        padding: clamp(24px, 6vw, 56px);
+      }
+      /* 边框内发光 */
+      .card::before {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        border-radius: inherit;
+        padding: 2px;
+        background: linear-gradient(
+          135deg,
+          rgba(127, 0, 255, 0.6),
+          rgba(0, 229, 255, 0.6),
+          rgba(0, 255, 198, 0.5)
+        );
+        -webkit-mask: linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        mask: linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        opacity: 0.35;
+        pointer-events: none;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5em;
+        padding: 0.35em 0.7em;
+        border: 1px solid var(--stroke);
+        border-radius: 999px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.03);
+        font-size: 0.85rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .badge i {
+        width: 0.5em;
+        height: 0.5em;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--hot), var(--cool));
+        box-shadow: 0 0 16px rgba(0, 229, 255, 0.5);
+      }
+
+      .title {
+        margin: 0.6em 0 0.2em;
+        font-size: clamp(28px, 6vw, 56px);
+        line-height: 1.1;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        text-wrap: balance;
+        text-shadow: 0 0 14px rgba(0, 229, 255, 0.25),
+          0 0 28px rgba(127, 0, 255, 0.16);
+        position: relative;
+      }
+      /* 轻微故障偏移 */
+      .title[data-glitch]::before,
+      .title[data-glitch]::after {
+        content: attr(data-glitch);
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        mix-blend-mode: screen;
+      }
+      .title[data-glitch]::before {
+        color: rgba(0, 229, 255, 0.6);
+        transform: translate(1px, 0);
+        clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+      }
+      .title[data-glitch]::after {
+        color: rgba(127, 0, 255, 0.6);
+        transform: translate(-1px, 0);
+        clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+      }
+      @keyframes glitch {
+        0%,
+        100% {
+          transform: none;
+        }
+        20% {
+          transform: translateX(0.6px);
+        }
+        40% {
+          transform: translateX(-0.8px);
+        }
+        60% {
+          transform: translateX(0.4px);
+        }
+        80% {
+          transform: translateX(-0.6px);
+        }
+      }
+      .title[data-glitch] {
+        animation: glitch 2.6s steps(2) infinite;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        font-size: clamp(14px, 2.8vw, 18px);
+        margin: 0.2em 0 1.2em;
+      }
+
+      .actions {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        --g: linear-gradient(135deg, var(--hot), var(--cool));
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 18px;
+        border-radius: 14px;
+        text-decoration: none;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        transition: 0.2s ease;
+        will-change: transform, box-shadow;
+        border: 1px solid var(--stroke);
+        color: var(--txt);
+        background: rgba(10, 12, 18, 0.5);
+      }
+      .btn.primary {
+        background: radial-gradient(
+            120% 120% at 10% 10%,
+            rgba(0, 229, 255, 0.25),
+            transparent 60%
+          ),
+          radial-gradient(
+            120% 120% at 90% 90%,
+            rgba(127, 0, 255, 0.25),
+            transparent 60%
+          ),
+          rgba(10, 12, 18, 0.55);
+        box-shadow: 0 10px 24px rgba(0, 229, 255, 0.16),
+          inset 0 0 12px rgba(127, 0, 255, 0.12);
+      }
+      .btn.ghost {
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .btn::after {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        border-radius: inherit;
+        padding: 1px;
+        background: var(--g);
+        -webkit-mask: linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        mask: linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        opacity: 0.55;
+        transition: 0.2s;
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 16px 32px rgba(127, 0, 255, 0.18);
+      }
+      .btn:hover::after {
+        opacity: 0.9;
+      }
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .footnote {
+        margin-top: 16px;
+        font-size: 12px;
+        color: #8aa3b8;
+        opacity: 0.9;
+      }
+
+      @media (max-width: 520px) {
+        .actions {
+          gap: 10px;
+        }
+        .btn {
+          width: 100%;
+        }
+      }
+
+      /* 降级：减少动画 */
+      @media (prefers-reduced-motion: reduce) {
+        body::before,
+        .sweep,
+        .title[data-glitch] {
+          animation: none !important;
+        }
+      }
+
+      /* 弹窗样式保留，供动态创建的弹窗复用 */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(4px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+      }
+      .modal {
+        width: min(92vw, 520px);
+        background: rgba(20, 22, 30, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        color: #eaf6ff;
+      }
+      .modal h3 {
+        margin: 0.2em 0 0.6em;
+        font-size: 20px;
+        font-weight: 800;
+      }
+      .modal label {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-size: 14px;
+        color: #9bb3c7;
+        margin: 0.4em 0 1em;
+      }
+      .modal input {
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.05);
+        color: #eaf6ff;
+        outline: none;
+      }
+      .modal .hint {
+        font-size: 12px;
+        color: #90a7bb;
+        margin: 0.2em 0 1em;
+      }
+      .modal .modal-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .modal .status {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #8aa3b8;
+        word-break: break-all;
+      }
+      .modal .btn {
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="bg" aria-hidden="true"></canvas>
+    <div class="sweep" aria-hidden="true"></div>
+
+    <main class="hero" role="main">
+      <section class="card" aria-label="欢迎">
+        <span class="badge"><i></i> Welcome</span>
+        <h1 class="title" data-glitch="欢迎使用 JoeJoeJoe 提供的自动脚本服务">
+          欢迎使用 JoeJoeJoe 提供的自动脚本服务
+        </h1>
+        <p class="subtitle">持续更新中 · 一键自动化，让流程更省心。</p>
+        <div class="actions">
+          <a class="btn primary" id="donateBtn" href="#" aria-label="打赏"
+            >打赏SOL</a
+          >
+          <a class="btn ghost" id="donateV2EXBtn" href="#" aria-label="打赏V2EX">打赏$V2EX</a>
+          <a class="btn ghost" href="https://github.com/HelloWorldImJoe/PublicShell" target="_blank" aria-label="查看文档">查看文档</a>
+        </div>
+        <div class="footnote">
+          小贴士：可在浏览器系统设置中启用“减少动态效果”来降低动画。
+        </div>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        const canvas = document.getElementById("bg");
+        const ctx = canvas.getContext("2d");
+        const DPR = Math.min(window.devicePixelRatio || 1, 2);
+        let W = 0,
+          H = 0,
+          particles = [],
+          running = true;
+        const reduceMotion =
+          window.matchMedia &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        function resize() {
+          W = canvas.width = Math.floor(innerWidth * DPR);
+          H = canvas.height = Math.floor(innerHeight * DPR);
+          canvas.style.width = innerWidth + "px";
+          canvas.style.height = innerHeight + "px";
+        }
+        window.addEventListener("resize", resize, { passive: true });
+        resize();
+
+        function rand(a, b) {
+          return a + Math.random() * (b - a);
+        }
+        function initParticles() {
+          const count = Math.min(
+            120,
+            Math.floor((innerWidth * innerHeight) / 12000)
+          );
+          particles = Array.from({ length: count }, () => ({
+            x: rand(0, W),
+            y: rand(0, H),
+            vx: rand(-0.12, 0.12) * DPR,
+            vy: rand(-0.12, 0.12) * DPR,
+            r: rand(0.6, 1.8) * DPR,
+            c:
+              Math.random() > 0.5
+                ? "rgba(0,229,255,0.85)"
+                : "rgba(127,0,255,0.85)",
+          }));
+        }
+        initParticles();
+        window.addEventListener("resize", initParticles, { passive: true });
+
+        function step() {
+          if (!running) return;
+          ctx.clearRect(0, 0, W, H);
+          // 背景淡雾
+          const grd = ctx.createRadialGradient(
+            W * 0.7,
+            H * 0.3,
+            0,
+            W * 0.7,
+            H * 0.3,
+            Math.max(W, H) * 0.8
+          );
+          grd.addColorStop(0, "rgba(0,229,255,0.04)");
+          grd.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.fillStyle = grd;
+          ctx.fillRect(0, 0, W, H);
+
+          // 粒子
+          for (let p of particles) {
+            p.x += p.vx;
+            p.y += p.vy;
+            if (p.x < 0 || p.x > W) p.vx *= -1;
+            if (p.y < 0 || p.y > H) p.vy *= -1;
+
+            ctx.beginPath();
+            ctx.fillStyle = p.c;
+            ctx.shadowColor = p.c;
+            ctx.shadowBlur = 12 * DPR;
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // 连线
+          ctx.lineWidth = 0.6 * DPR;
+          for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+              const a = particles[i],
+                b = particles[j];
+              const dx = a.x - b.x,
+                dy = a.y - b.y;
+              const d2 = dx * dx + dy * dy;
+              if (d2 < 120 * DPR * (120 * DPR)) {
+                const alpha = 0.12 * (1 - d2 / (120 * DPR * (120 * DPR)));
+                ctx.strokeStyle = `rgba(120,200,255,${alpha})`;
+                ctx.beginPath();
+                ctx.moveTo(a.x, a.y);
+                ctx.lineTo(b.x, b.y);
+                ctx.stroke();
+              }
+            }
+          }
+
+          ctx.shadowBlur = 0;
+          if (!reduceMotion) requestAnimationFrame(step);
+        }
+
+        if (!reduceMotion) {
+          running = true;
+          requestAnimationFrame(step);
+        } else {
+          // 降级为静态一帧
+          running = false;
+          step();
+        }
+
+        // 页面不可见时暂停，提升性能
+        document.addEventListener("visibilitychange", () => {
+          if (reduceMotion) return;
+          running = !document.hidden;
+          if (running) requestAnimationFrame(step);
+        });
+      })();
+    </script>
+
+    <!-- 替换：打赏逻辑为“点击后创建弹窗 + 按需加载 web3.js” -->
+    <script>
+      (function () {
+        const DEST_ADDR_STR = "H5uYBn9MSrMTEz9deLDGBe9eczsfzXjZjX1xVcB6FJgU";
+
+        function universalLink(amount, recipient) {
+          const a = Number(amount || 0);
+          const r = encodeURIComponent((recipient || DEST_ADDR_STR).trim());
+          const label = encodeURIComponent("JoeJoeJoe 打赏");
+          const message = encodeURIComponent("感谢支持");
+          return `https://phantom.app/ul/transfer?recipient=${r}&amount=${a}&network=mainnet&label=${label}&message=${message}`;
+        }
+
+  let modal, amountInput, recipientInput, statusEl, payLink, connectBtn, sendBtn, closeBtn, donateTitle;
+  let phantomWallet = null;
+  let walletConnected = false;
+  let donateMode = 'SOL'; // 'SOL' | 'V2EX'
+
+  // 常量
+  const V2EX_TOKEN_MINT = "9raUVuzeWUk53co63M4WXLWPWE4Xc6Lpn7RS9dnkpump"; // V2EX 代币
+  const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";   // SPL Token Program
+  const ASSOCIATED_TOKEN_PROGRAM_ID = "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"; // ATA Program
+  const LAMPORTS_PER_SOL = 1_000_000_000;
+
+        function ensureModal() {
+          if (modal) return;
+
+          const wrapper = document.createElement("div");
+          wrapper.id = "donateModal";
+          wrapper.className = "modal-backdrop";
+          wrapper.hidden = true;
+          wrapper.innerHTML = `
+          <div class="modal">
+            <h3 id="donateTitle">打赏</h3>
+            <label>
+              金额/数量
+              <input type="number" id="donateAmount" min="0" step="0.000001" value="0.002" />
+            </label>
+            <label>
+              接收地址
+              <input disabled type="text" id="recipientAddress" value="H5uYBn9MSrMTEz9deLDGBe9eczsfzXjZjX1xVcB6FJgU" />
+            </label>
+            <div class="hint">默认示例地址仅用于演示，你也可以填入任意 Solana 地址或 .sol 域名</div>
+            <div class="modal-actions">
+              <button class="btn" id="connectWallet">连接钱包</button>
+              <button class="btn primary" id="sendTip" disabled>发送打赏</button>
+              <button class="btn" id="closeDonate">取消</button>
+            </div>
+            <div class="status" id="donateStatus"></div>
+          </div>
+        `;
+          document.body.appendChild(wrapper);
+
+          modal = wrapper;
+          donateTitle = modal.querySelector('#donateTitle');
+          amountInput = modal.querySelector("#donateAmount");
+          recipientInput = modal.querySelector("#recipientAddress");
+          statusEl = modal.querySelector("#donateStatus");
+          payLink = modal.querySelector("#solanaPayLink");
+          connectBtn = modal.querySelector("#connectWallet");
+          sendBtn = modal.querySelector("#sendTip");
+          closeBtn = modal.querySelector("#closeDonate");
+
+          function setStatus(msg, isError = false) {
+            statusEl.style.color = isError ? "#ff8a8a" : "#8aa3b8";
+            statusEl.textContent = msg || "";
+          }
+          function updatePayLink() {
+            if (!payLink) return; // 容错：按钮不存在则跳过
+            const a = Math.max(0, Number(amountInput.value || 0)) || 0;
+            // 仅在选择 SOL 时展示 Solana Pay
+            const isSOL = donateMode === 'SOL';
+            payLink.style.display = isSOL ? '' : 'none';
+            payLink.href = universalLink(a.toFixed(6), (recipientInput?.value || '').trim());
+          }
+
+          amountInput.addEventListener("input", updatePayLink);
+          recipientInput.addEventListener("input", () => setStatus(''));
+          function hideModal() {
+            modal.hidden = true;
+            window.removeEventListener('keydown', escHandler, true);
+          }
+          function escHandler(ev) {
+            if (ev.key === 'Escape') {
+              ev.preventDefault();
+              hideModal();
+            }
+          }
+          closeBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            hideModal();
+          });
+          modal.addEventListener("click", (e) => {
+            if (e.target === modal) hideModal();
+          });
+          updatePayLink();
+          // 提供方法给外层在打开弹窗时绑定 ESC
+          modal.attachEsc = function attachEscOnce() {
+            window.addEventListener('keydown', escHandler, true);
+          };
+
+          function applyMode(mode) {
+            donateMode = mode === 'V2EX' ? 'V2EX' : 'SOL';
+            if (donateMode === 'SOL') {
+              donateTitle.textContent = '打赏 SOL';
+              amountInput.value = '0.01';
+              recipientInput.value = DEST_ADDR_STR;
+            } else {
+              donateTitle.textContent = '打赏 $V2EX';
+              amountInput.value = '100';
+              recipientInput.value = 'H5uYBn9MSrMTEz9deLDGBe9eczsfzXjZjX1xVcB6FJgU';
+            }
+            setStatus('');
+            updatePayLink();
+          }
+
+          // 暴露给外层使用
+          modal.applyMode = applyMode;
+
+          // 钱包检测与连接
+          function checkPhantomWallet() {
+            if (window.solana && window.solana.isPhantom) {
+              phantomWallet = window.solana;
+              if (phantomWallet.isConnected) {
+                walletConnected = true;
+              }
+            }
+            updateWalletStatus();
+          }
+          async function connectPhantomWallet() {
+            try {
+              setStatus('正在连接钱包...');
+              if (!window.solana) throw new Error('未检测到 Phantom 钱包');
+              await ensureWeb3();
+              const resp = await window.solana.connect();
+              phantomWallet = window.solana;
+              walletConnected = !!(resp?.publicKey || phantomWallet.publicKey);
+              updateWalletStatus();
+              setStatus('钱包已连接');
+            } catch (e) {
+              setStatus(`连接失败：${e?.message || e}`, true);
+            }
+          }
+          function updateWalletStatus() {
+            if (walletConnected) {
+              connectBtn.textContent = '已连接';
+              connectBtn.disabled = true;
+              sendBtn.disabled = false;
+            } else {
+              connectBtn.textContent = '连接钱包';
+              connectBtn.disabled = false;
+              sendBtn.disabled = true;
+            }
+          }
+
+          // 域名解析（.sol）
+          async function resolveSolDomain(address) {
+            if (address && address.endsWith('.sol')) {
+              const resp = await fetch(`https://sns-sdk-proxy.bonfida.workers.dev/resolve/${address}`);
+              const data = await resp.json();
+              if (!data?.result) throw new Error('域名解析失败');
+              return data.result;
+            }
+            return address;
+          }
+
+          // 选择 RPC（可扩展多节点）
+          async function selectBestRPC() {
+            const RPC_NODES = ['https://solana-rpc.publicnode.com'];
+            for (const rpc of RPC_NODES) {
+              try {
+                const { web3 } = await ensureWeb3();
+                const c = new web3.Connection(rpc, 'confirmed');
+                await c.getEpochInfo();
+                return rpc;
+              } catch (_) { /* 继续尝试下一个 */ }
+            }
+            const { web3 } = await ensureWeb3();
+            return web3.clusterApiUrl('mainnet-beta');
+          }
+
+          // 辅助：PublicKey -> Uint8Array（仅使用 toBytes）
+          function pkBytes(pubkey) {
+            if (pubkey && typeof pubkey.toBytes === 'function') {
+              const b = pubkey.toBytes();
+              return b instanceof Uint8Array ? b : new Uint8Array(b);
+            }
+            throw new Error('Invalid PublicKey: missing toBytes()');
+          }
+
+          // 辅助：派生 ATA
+          function deriveATA(ownerPubkey, mintPubkey) {
+            const { web3 } = window; // 未用，保持兼容
+            const [ata] = window.solanaWeb3.PublicKey.findProgramAddressSync(
+              [
+                pkBytes(ownerPubkey),
+                pkBytes(new window.solanaWeb3.PublicKey(TOKEN_PROGRAM_ID)),
+                pkBytes(mintPubkey),
+              ],
+              new window.solanaWeb3.PublicKey(ASSOCIATED_TOKEN_PROGRAM_ID)
+            );
+            return ata;
+          }
+
+          // 创建 idempotent ATA 指令
+          function createATAIdempotentIx(payer, ata, owner, mint) {
+            const keys = [
+              { pubkey: payer, isSigner: true, isWritable: true },
+              { pubkey: ata, isSigner: false, isWritable: true },
+              { pubkey: owner, isSigner: false, isWritable: false },
+              { pubkey: mint, isSigner: false, isWritable: false },
+              { pubkey: window.solanaWeb3.SystemProgram.programId, isSigner: false, isWritable: false },
+              { pubkey: new window.solanaWeb3.PublicKey(TOKEN_PROGRAM_ID), isSigner: false, isWritable: false },
+            ];
+            const data = Uint8Array.of(1); // CreateIdempotent = 1
+            return new window.solanaWeb3.TransactionInstruction({
+              keys,
+              programId: new window.solanaWeb3.PublicKey(ASSOCIATED_TOKEN_PROGRAM_ID),
+              data,
+            });
+          }
+
+          // SPL Token Transfer 指令（未校验小数）
+          function createSPLTransferIx(source, destination, owner, amountU64) {
+            const data = new Uint8Array(9);
+            data[0] = 3; // Token Instruction: Transfer
+            let a = BigInt(Math.round(amountU64));
+            for (let i = 0; i < 8; i++) data[1 + i] = Number((a >> BigInt(8 * i)) & 0xffn);
+            return new window.solanaWeb3.TransactionInstruction({
+              keys: [
+                { pubkey: source, isSigner: false, isWritable: true },
+                { pubkey: destination, isSigner: false, isWritable: true },
+                { pubkey: owner, isSigner: true, isWritable: false },
+              ],
+              programId: new window.solanaWeb3.PublicKey(TOKEN_PROGRAM_ID),
+              data,
+            });
+          }
+
+          async function sendTipAction() {
+            try {
+              setStatus('');
+              const token = donateMode;
+              const amount = Number(amountInput.value);
+              let recipient = (recipientInput.value || '').trim();
+              if (!amount || amount <= 0) return setStatus('请输入有效的金额/数量', true);
+
+              const { web3 } = await ensureWeb3();
+              if (!phantomWallet) return setStatus('请先连接钱包', true);
+
+              // 解析域名
+              recipient = await resolveSolDomain(recipient);
+              const toPubkey = new window.solanaWeb3.PublicKey(recipient);
+
+              const rpcUrl = await selectBestRPC();
+              const connection = new window.solanaWeb3.Connection(rpcUrl, 'confirmed');
+
+              if (token === 'SOL') {
+                setStatus('构建 SOL 交易中...');
+                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
+                const tx = new window.solanaWeb3.Transaction({ recentBlockhash: blockhash, feePayer: phantomWallet.publicKey })
+                  .add(window.solanaWeb3.SystemProgram.transfer({
+                    fromPubkey: phantomWallet.publicKey,
+                    toPubkey: toPubkey,
+                    lamports: Math.round(amount * LAMPORTS_PER_SOL),
+                  }));
+                setStatus('等待钱包确认...');
+                const { signature } = await phantomWallet.signAndSendTransaction(tx);
+                setStatus('链上确认中...');
+                await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
+                setStatus(`打赏成功！https://solscan.io/tx/${signature}`);
+              } else {
+                // V2EX 代币（6位小数）
+                setStatus('构建 V2EX 代币交易中...');
+                const mint = new window.solanaWeb3.PublicKey(V2EX_TOKEN_MINT);
+                const fromATA = deriveATA(phantomWallet.publicKey, mint);
+                const toATA = deriveATA(toPubkey, mint);
+                const ixs = [];
+                // 双方 ATA 确保存在（幂等创建）
+                ixs.push(createATAIdempotentIx(phantomWallet.publicKey, fromATA, phantomWallet.publicKey, mint));
+                ixs.push(createATAIdempotentIx(phantomWallet.publicKey, toATA, toPubkey, mint));
+                // 代币数量转换为整数（6位小数）
+                const amountU64 = Math.round(amount * 1_000_000);
+                ixs.push(createSPLTransferIx(fromATA, toATA, phantomWallet.publicKey, amountU64));
+                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
+                const tx = new window.solanaWeb3.Transaction({ recentBlockhash: blockhash, feePayer: phantomWallet.publicKey });
+                ixs.forEach(ix => tx.add(ix));
+                setStatus('等待钱包确认...');
+                const { signature } = await phantomWallet.signAndSendTransaction(tx);
+                setStatus('链上确认中...');
+                await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
+                setStatus(`打赏成功！https://solscan.io/tx/${signature}`);
+              }
+            } catch (err) {
+              setStatus(`打赏失败：${err?.message || err}`, true);
+            }
+          }
+
+          checkPhantomWallet();
+          connectBtn.addEventListener('click', connectPhantomWallet);
+          sendBtn.addEventListener('click', sendTipAction);
+        }
+
+        // 按需：确保 Buffer 存在（提供最小内联 shim，避免外部 CDN 失败）
+        function ensureBuffer() {
+          if (globalThis.Buffer && typeof globalThis.Buffer.from === 'function') {
+            return Promise.resolve();
+          }
+          // 最小 Buffer shim，仅实现 web3.js 常用的 from/alloc/isBuffer
+          const te = new TextEncoder();
+          function from(input, encoding) {
+            if (typeof input === 'string') {
+              if (encoding === 'base64') {
+                const bin = atob(input);
+                const out = new Uint8Array(bin.length);
+                for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+                return out;
+              }
+              if (encoding === 'hex') {
+                const len = input.length / 2;
+                const out = new Uint8Array(len);
+                for (let i = 0; i < len; i++) out[i] = parseInt(input.substr(i * 2, 2), 16);
+                return out;
+              }
+              return te.encode(input);
+            }
+            if (input instanceof ArrayBuffer) return new Uint8Array(input);
+            if (ArrayBuffer.isView(input)) return new Uint8Array(input.buffer, input.byteOffset, input.byteLength);
+            if (Array.isArray(input)) return new Uint8Array(input);
+            return new Uint8Array(0);
+          }
+          function alloc(size) { return new Uint8Array(size); }
+          function isBuffer(b) { return b instanceof Uint8Array; }
+          globalThis.Buffer = Object.assign(function Buffer() {}, { from, alloc, isBuffer });
+          globalThis.global = globalThis.global || globalThis;
+          globalThis.process = globalThis.process || { env: {} };
+          return Promise.resolve();
+        }
+
+        // 修改：加载 web3.js 前先确保 Buffer 存在
+        let web3Promise;
+        function ensureWeb3() {
+          if (window.solanaWeb3) {
+            return ensureBuffer().then(() => ({
+              web3: window.solanaWeb3,
+              connection: new window.solanaWeb3.Connection(
+                'https://solana-rpc.publicnode.com',
+                'confirmed'
+              ),
+            }));
+          }
+          if (!web3Promise) {
+            web3Promise = (async () => {
+              await ensureBuffer();
+              await new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = 'https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js';
+                s.onload = resolve;
+                s.onerror = () => reject(new Error('无法加载 Solana Web3.js'));
+                document.head.appendChild(s);
+              });
+              return {
+                web3: window.solanaWeb3,
+                connection: new window.solanaWeb3.Connection(
+                  'https://solana-rpc.publicnode.com',
+                  'confirmed'
+                ),
+              };
+            })();
+          }
+          return web3Promise;
+        }
+
+        function showDonate(mode) {
+          ensureModal();
+          if (typeof modal.applyMode === 'function') {
+            modal.applyMode(mode);
+          }
+          modal.hidden = false;
+          if (typeof modal.attachEsc === 'function') modal.attachEsc();
+          ensureWeb3().catch(() => {});
+        }
+
+        const donateBtn = document.getElementById('donateBtn');
+        if (donateBtn) {
+          donateBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            showDonate('SOL');
+          });
+        }
+        const donateV2EXBtn = document.getElementById('donateV2EXBtn');
+        if (donateV2EXBtn) {
+          donateV2EXBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            showDonate('V2EX');
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
