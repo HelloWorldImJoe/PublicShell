@@ -314,6 +314,23 @@
         transform: translateY(0);
       }
 
+      /* 发送打赏按钮内的菊花加载动画 */
+      .btn .spinner {
+        width: 1em;
+        height: 1em;
+        border: 2px solid rgba(234, 246, 255, 0.35);
+        border-top-color: #eaf6ff;
+        border-right-color: #eaf6ff;
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+        margin-right: 8px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
       .footnote {
         margin-top: 16px;
         font-size: 12px;
@@ -416,7 +433,7 @@
           <a class="btn primary" id="donateBtn" href="#" aria-label="打赏"
             >打赏SOL</a
           >
-          <a class="btn ghost" id="donateV2EXBtn" href="#" aria-label="打赏V2EX">打赏$V2EX</a>
+          <a class="btn primary" id="donateV2EXBtn" href="#" aria-label="打赏V2EX">打赏$V2EX</a>
           <a class="btn ghost" href="https://github.com/HelloWorldImJoe/PublicShell" target="_blank" aria-label="查看文档">查看文档</a>
         </div>
         <div class="footnote">
@@ -544,7 +561,6 @@
       })();
     </script>
 
-    <!-- 替换：打赏逻辑为“点击后创建弹窗 + 按需加载 web3.js” -->
     <script>
       (function () {
         const DEST_ADDR_STR = "H5uYBn9MSrMTEz9deLDGBe9eczsfzXjZjX1xVcB6FJgU";
@@ -557,7 +573,7 @@
           return `https://phantom.app/ul/transfer?recipient=${r}&amount=${a}&network=mainnet&label=${label}&message=${message}`;
         }
 
-  let modal, amountInput, recipientInput, statusEl, payLink, connectBtn, sendBtn, closeBtn, donateTitle;
+  let modal, amountInput, recipientInput, statusEl, payLink, sendBtn, closeBtn, donateTitle;
   let phantomWallet = null;
   let walletConnected = false;
   let donateMode = 'SOL'; // 'SOL' | 'V2EX'
@@ -586,9 +602,8 @@
               接收地址
               <input disabled type="text" id="recipientAddress" value="H5uYBn9MSrMTEz9deLDGBe9eczsfzXjZjX1xVcB6FJgU" />
             </label>
-            <div class="hint">默认示例地址仅用于演示，你也可以填入任意 Solana 地址或 .sol 域名</div>
+            <div class="hint">您的打赏将发送到此地址</div>
             <div class="modal-actions">
-              <button class="btn" id="connectWallet">连接钱包</button>
               <button class="btn primary" id="sendTip" disabled>发送打赏</button>
               <button class="btn" id="closeDonate">取消</button>
             </div>
@@ -603,13 +618,25 @@
           recipientInput = modal.querySelector("#recipientAddress");
           statusEl = modal.querySelector("#donateStatus");
           payLink = modal.querySelector("#solanaPayLink");
-          connectBtn = modal.querySelector("#connectWallet");
           sendBtn = modal.querySelector("#sendTip");
           closeBtn = modal.querySelector("#closeDonate");
 
           function setStatus(msg, isError = false) {
             statusEl.style.color = isError ? "#ff8a8a" : "#8aa3b8";
             statusEl.textContent = msg || "";
+          }
+          function setLoading(loading, label) {
+            if (!sendBtn) return;
+            if (loading) {
+              sendBtn.setAttribute('aria-busy', 'true');
+              sendBtn.disabled = true;
+              const text = label || '处理中...';
+              sendBtn.innerHTML = `<span class="spinner" aria-hidden="true"></span><span class="btn-text">${text}</span>`;
+            } else {
+              sendBtn.removeAttribute('aria-busy');
+              sendBtn.innerHTML = '发送打赏';
+              sendBtn.disabled = !walletConnected;
+            }
           }
           function updatePayLink() {
             if (!payLink) return; // 容错：按钮不存在则跳过
@@ -686,18 +713,20 @@
               setStatus('钱包已连接');
             } catch (e) {
               setStatus(`连接失败：${e?.message || e}`, true);
+              throw e;
             }
           }
+          async function tryConnectPhantom() {
+            if (!window.solana) throw new Error('未检测到 Phantom 钱包');
+            await ensureWeb3();
+            const resp = await window.solana.connect();
+            phantomWallet = window.solana;
+            walletConnected = !!(resp?.publicKey || phantomWallet.publicKey);
+            updateWalletStatus();
+            return walletConnected;
+          }
           function updateWalletStatus() {
-            if (walletConnected) {
-              connectBtn.textContent = '已连接';
-              connectBtn.disabled = true;
-              sendBtn.disabled = false;
-            } else {
-              connectBtn.textContent = '连接钱包';
-              connectBtn.disabled = false;
-              sendBtn.disabled = true;
-            }
+            if (sendBtn) sendBtn.disabled = !walletConnected;
           }
 
           // 域名解析（.sol）
@@ -784,8 +813,12 @@
             });
           }
 
+          let sending = false;
           async function sendTipAction() {
             try {
+              if (sending) return;
+              sending = true;
+              if (sendBtn) sendBtn.disabled = true;
               setStatus('');
               const token = donateMode;
               const amount = Number(amountInput.value);
@@ -793,7 +826,7 @@
               if (!amount || amount <= 0) return setStatus('请输入有效的金额/数量', true);
 
               const { web3 } = await ensureWeb3();
-              if (!phantomWallet) return setStatus('请先连接钱包', true);
+              if (!phantomWallet) throw new Error('钱包未连接');
 
               // 解析域名
               recipient = await resolveSolDomain(recipient);
@@ -840,12 +873,45 @@
               }
             } catch (err) {
               setStatus(`打赏失败：${err?.message || err}`, true);
+            } finally {
+              sending = false;
+              if (sendBtn) sendBtn.disabled = !walletConnected;
             }
           }
 
+          async function autoConnectSilently() {
+            try {
+              if (walletConnected) return;
+              await ensureWeb3();
+              const ok = await tryConnectPhantom();
+              if (ok) setStatus('钱包已连接');
+            } catch (_) { /* 静默忽略 */ }
+          }
+
           checkPhantomWallet();
-          connectBtn.addEventListener('click', connectPhantomWallet);
-          sendBtn.addEventListener('click', sendTipAction);
+          // 点击发送时才尝试连接并打赏
+          sendBtn.addEventListener('click', async () => {
+            try {
+              setLoading(true, walletConnected ? '处理中...' : '连接中...');
+              if (!walletConnected) {
+                setStatus('正在连接钱包...');
+                const ok = await tryConnectPhantom();
+                if (!ok) {
+                  setStatus('钱包未连接', true);
+                  return;
+                }
+                setStatus('钱包已连接');
+              }
+              setLoading(true, '处理中...');
+              await sendTipAction();
+            } catch (e) {
+              setStatus(`连接失败：${e?.message || e}`, true);
+            } finally {
+              setLoading(false);
+            }
+          });
+          // 暴露静默自动连接
+          modal.autoConnectSilently = autoConnectSilently;
         }
 
         // 按需：确保 Buffer 存在（提供最小内联 shim，避免外部 CDN 失败）
@@ -925,7 +991,10 @@
           }
           modal.hidden = false;
           if (typeof modal.attachEsc === 'function') modal.attachEsc();
-          ensureWeb3().catch(() => {});
+          // 可选：仅自动连接钱包（不自动打赏）
+          ensureWeb3()
+            .then(() => { if (modal.autoConnectSilently) modal.autoConnectSilently(); })
+            .catch(() => {});
         }
 
         const donateBtn = document.getElementById('donateBtn');
